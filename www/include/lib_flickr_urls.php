@@ -41,7 +41,7 @@
 		$sz = "z";
 		$ext = "jpg";
 
-	    return "http://farm{$photo['farm']}.static.flickr.com/{$photo['server']}/{$photo['id']}_{$photo['secret']}_{$sz}.{$jpg}";
+	    return "http://farm{$photo['farm']}.static.flickr.com/{$photo['server']}/{$photo['id']}_{$photo['secret']}_{$sz}.{$ext}";
         
 	}
 
