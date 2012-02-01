@@ -1,0 +1,72 @@
+{capture assign="page_title"}{$owner.username} | archives | {$context} | {$year}{/capture}
+{include file="inc_head.txt"}
+
+<h2>
+{if $is_own}
+{if $context=='posted'}Photos you posted during {$year|escape}{else}Photos you took during {$year|escape}{/if}
+{else}
+{if $context=='posted'}Photos {$owner.username|escape} uploaded during {$year|escape}{else}Photos {$owner.username|escape} took during {$year|escape}{/if}
+{/if}
+</h2>
+
+<div id="archives_navi">
+<ul id="archives_navi_years">
+{if $previous_year}<li><a title="photos from {$previous_year|escape}" href="{$owner|@flickr_urls_photos_user_archives}date-{$context|escape}/{$previous_year|escape}/">{$previous_year}</a></li>
+{elseif $previous}
+{assign var="previous_month" value=$previous.1}
+<li><a href="{$owner|@flickr_urls_photos_user_archives}date-{$context|escape}/{$previous.0|escape}/">{$previous.0|escape}</a></li>
+{else}{* this is a dirty little hack to trick the CSS hooks *}<li style="display:none;"></li>{/if}
+
+<li>
+{if 0}<strong>{$year|escape}</strong>{/if}
+<ul id="archives_navi_months">
+{foreach from=$months item="name" key="mm"}
+<li>{if in_array($mm, $user_months)}<a href="{$owner|@flickr_urls_photos_user_archives}date-{$context|escape}/{$year|escape}/{$mm|escape}/">{$name|escape}</a>{else}{$name|escape}{/if}</li>
+{/foreach}
+</ul>
+
+</li>
+
+{if $next_year}<li><a title="photos from {$next_year|escape}" href="{$owner|@flickr_urls_photos_user_archives}date-{$context|escape}/{$next_year|escape}/">{$next_year}</a></li>
+{elseif $next}
+{assign var="next_month" value=$next.1}
+<li><a href="{$owner|@flickr_urls_photos_user_archives}date-{$context|escape}/{$next.0|escape}/">{$next.0|escape}</a></li>
+{else}{* this is a dirty little hack to trick the CSS hooks *}<li style="display:none;"></li>{/if}
+</ul>
+
+</div>
+
+{if ! $photos|@count}
+<p>None!</p>
+{else}
+
+{foreach from=$photos item="row"}
+
+<div class="photos_user_photo">
+
+<div class="photo">
+<a href="{$row|@flickr_urls_photo_page}"><img src="{$row|@flickr_urls_photo_static}" /></a>
+<div class="photo_when">{$row.datetaken|@flickr_dates_verbosify_iso8601}</div>
+</div>
+
+<div class="photo_sidebar" style="margin-top:0px;">
+{include file="inc_flickr_photo_map.txt" photo=$row}
+</div>
+
+<br clear="all" />
+
+</div>
+
+{/foreach}
+
+{include file="inc_pagination.txt"}
+
+{if $cfg.enable_keyboard_browse}
+{include file="inc_keyboard_browse.txt" class_name="photo"}
+{/if}
+
+{include file="inc_flickr_photo_map_load.txt"}
+
+{/if}
+
+{include file="inc_foot.txt"}

@@ -19,10 +19,7 @@
 		$user = users_get_by_id($flickr_user['user_id']);
 
 		if (! $user){
-			return array(
-				'ok' => 0,
-				'error' => 'not a valid user',
-			);
+			return not_okay("not a valid user");
 		}
 
 		$method = 'flickr.photos.search';
@@ -53,10 +50,7 @@
 			$photos = $rsp['rsp']['photos']['photo'];
 
 			if (! is_array($photos)){
-				return array(
-					'ok' => 0,
-					'error' => 'no photos',
-				);
+				return not_okay("no photos");
 			}
 
 			foreach ($photos as $photo){
@@ -82,20 +76,16 @@
 
 		if ((! $user) || (! $user['id'])){
 
-			return array(
-				'ok' => 0,
-				'error' => 'failed to retrieve user (photo owner)',
-			);
+			return not_okay("failed to retrieve user (photo owner)");
 		}
 
 		$photo = _flickr_photos_import_prepare_photo($user, $photo);
 
 		# TO DO: error handling...
 
-		echo "add photo {$photo['id']}\n";
-
 		if ($_photo = flickr_photos_get_by_id($photo['id'])){
 
+			echo "update photo {$photo['id']}\n";
 			# TO DO: make this less stupid...
 
 			unset($photo['id']);
@@ -105,7 +95,16 @@
 		}
 
 		else {
-			flickr_photos_add_photo($photo);
+
+			echo "add photo {$photo['id']}\n";
+
+			$rsp = flickr_photos_add_photo($photo);
+
+			if (! $rsp['ok']){
+				dumper("OMGWTF");
+				dumper($rsp);
+			}
+
 			flickr_photos_lookup_add($photo['id'], $photo['user_id']);
 		}
 
@@ -149,10 +148,9 @@
 
 		# go!
 
-		return array(
-			'ok' => 1,
+		return okay(array(
 			'photo' => $photo
-		);
+		));
 	}
 
 	#################################################################
@@ -299,8 +297,8 @@
 	
 	#################################################################
 	
-	
 	function flickr_photos_import_photo_files_s3(&$photo, $more=array()){
+
 		loadlib('storage_s3');
 		
 		$flickr_urls = _flickr_photos_import_flickr_urls($photo, $more);
@@ -554,10 +552,9 @@
 			$args['page'] += 1;
 		}
 
-		return array(
-			'ok' => 1,
+		return okay(array(
 			'count_imported' => $imported,
-		);
+		));
 	}
 
 	#################################################################
@@ -662,32 +659,17 @@
 			}
 
 			$photo['geoperms'] = $geoperms;
+			$photo['geocontext'] = $photo['context'];
 
 			unset($photo['place_id']);
 			unset($photo['geo_is_family']);
 			unset($photo['geo_is_friend']);
 			unset($photo['geo_is_contact']);
 			unset($photo['geo_is_public']);
+		}
 
-			# get geo context here, this is very annoying
-			# because I forgot to include geo context when
-			# returning geo 'extras' in photos.search...me
-			# dumb (20111227/straup)
-
-			$flickr_user = flickr_users_get_by_user_id($photo['user_id']);
-
-			$method = 'flickr.photos.getInfo';
-
-			$args = array(
-				'photo_id' => $photo['id'],
-				'auth_token' => $flickr_user['auth_token'],
-			);
-
-			$rsp = flickr_api_call($method, $args);
-
-			if ($rsp['ok']){
-				$photo['geocontext'] = $rsp['rsp']['photo']['location']['context'];
-			}
+		if (isset($photo['context'])){
+			unset($photo['context']);
 		}
 
 		if (isset($photo['date_faved'])){
